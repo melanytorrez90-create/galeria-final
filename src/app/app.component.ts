@@ -14,8 +14,9 @@ export class AppComponent implements OnInit {
   obras: Obra[] = [];
   usuario: any = null;
 
+  // Estado inicial
   modoOscuro = false;
-  idioma = 'es'; 
+  idioma = 'es'; // 'es' para Español, 'en' para Inglés
 
   // --- DICCIONARIO DE TRADUCCIONES ---
   textos: any = {
@@ -81,7 +82,7 @@ export class AppComponent implements OnInit {
     }
   };
 
-  // --- DICCIONARIO PARA TRADUCIR CATEGORIAS DE LA BASE DE DATOS ---
+  // --- DICCIONARIO PARA TRADUCIR CATEGORIAS ---
   categoriasTraducidas: any = {
     'Naturaleza': 'Nature',
     'General': 'General',
@@ -96,42 +97,56 @@ export class AppComponent implements OnInit {
   };
 
   ngOnInit() {
+    // 1. Nos suscribimos a la lista de obras
     this.firestoreService.getObras().subscribe(data => this.obras = data);
+    
+    // 2. Nos suscribimos al estado del usuario (Login/Logout)
     this.firestoreService.user$.subscribe(user => this.usuario = user);
   }
 
+  // --- FUNCIONES VISUALES ---
   cambiarTema() { this.modoOscuro = !this.modoOscuro; }
   cambiarIdioma() { this.idioma = this.idioma === 'es' ? 'en' : 'es'; }
+  
   login() { this.firestoreService.login(); }
   logout() { this.firestoreService.logout(); }
 
-  // Función auxiliar para traducir la categoría si existe en el diccionario
+  // Función auxiliar para traducir la categoría de la DB
   traducirCat(cat: string) {
+    // Si estamos en inglés y existe la traducción, la usa. Si no, devuelve la original.
     if (this.idioma === 'en' && this.categoriasTraducidas[cat]) {
       return this.categoriasTraducidas[cat];
     }
-    return cat; // Si es español o no tiene traducción, devuelve la original
+    return cat;
   }
 
-  // CRUD (Sin cambios, solo para que funcione el archivo completo)
+  // --- FUNCIONES CRUD (Base de Datos) ---
   nuevaObra() {
     if(!this.usuario) return;
-    const titulo = prompt('Título:');
-    const url = prompt('URL:', 'https://picsum.photos/300');
+    const titulo = prompt('Título de la obra:');
+    const url = prompt('URL de la imagen:', 'https://picsum.photos/300');
+    
     if (titulo && url) {
-      this.firestoreService.agregarObra({
+      const nueva: Obra = {
         titulo, url, autor: this.usuario.displayName, 
         categoria: 'General', fecha: new Date().toISOString().split('T')[0]
-      });
+      };
+      this.firestoreService.agregarObra(nueva);
     }
   }
+
   editarObra(obra: Obra) {
     if(!this.usuario) return;
-    const t = prompt('Nuevo título:', obra.titulo);
-    if (t) this.firestoreService.actualizarObra(obra.id!, { titulo: t });
+    const nuevoTitulo = prompt('Nuevo título:', obra.titulo);
+    if (nuevoTitulo) {
+      this.firestoreService.actualizarObra(obra.id!, { titulo: nuevoTitulo });
+    }
   }
+
   borrarObra(id: string) {
     if(!this.usuario) return;
-    if(confirm('¿Borrar?')) this.firestoreService.borrarObra(id);
+    if(confirm('¿Seguro que deseas eliminar esta obra?')) {
+      this.firestoreService.borrarObra(id);
+    }
   }
 }
