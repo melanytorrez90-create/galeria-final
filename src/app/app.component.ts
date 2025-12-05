@@ -96,11 +96,14 @@ export class AppComponent implements OnInit {
     'Arquitectura': 'Architecture'
   };
 
-  ngOnInit() {
+ngOnInit() {
     // 1. Nos suscribimos a la lista de obras
-    this.firestoreService.getObras().subscribe(data => this.obras = data);
+    this.firestoreService.getObras().subscribe(data => {
+      this.obras = data;
+      console.log('¡Aquí está el array!:', this.obras); // <--- AGREGA ESTA LÍNEA
+    });
     
-    // 2. Nos suscribimos al estado del usuario (Login/Logout)
+    // 2. Nos suscribimos al estado del usuario...
     this.firestoreService.user$.subscribe(user => this.usuario = user);
   }
 
